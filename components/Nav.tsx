@@ -28,11 +28,11 @@ export function Nav() {
           <span className="font-semibold tracking-tight text-gold">Miller Nexus</span>
         </Link>
         <nav className="hidden items-center gap-6 text-sm text-mutedInk md:flex">
-          <Link href="/about" className="hover:text-gold">About Us</Link>
           <Link href="/services" className="hover:text-gold">Services</Link>
           <Link href="/insights" className="hover:text-gold">Insights</Link>
           <Link href="/case-studies" className="hover:text-gold">Case Studies</Link>
           <Link href="/contact" className="hover:text-gold">Contact</Link>
+          <Link href="/about" className="hover:text-gold">About Us</Link>
         </nav>
         <div className="flex items-center gap-3">
           {loading ? null : user ? (

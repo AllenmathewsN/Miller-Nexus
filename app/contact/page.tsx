@@ -10,6 +10,7 @@ export default function ContactPage() {
             <div>
               <label className="label">Email</label>
               <p className="text-gold font-medium">laura.miller@millernexus.net</p>
+              <p className="text-mutedInk mt-1">0790 502270</p>
             </div>
             <div>
               <label className="label">For institutional inquiries and project discussions</label>
