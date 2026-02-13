@@ -40,3 +40,6 @@ prisma/dev.db-journal
 # node zip
 node.zip
 node-v20.10.0-win-x64/
+
+# Local Netlify folder
+.netlify
