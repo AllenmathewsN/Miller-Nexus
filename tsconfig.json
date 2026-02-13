@@ -7,6 +7,7 @@
       "esnext"
     ],
     "skipLibCheck": true,
+    "typeRoots": ["./node_modules/@types"],
     "strict": false,
     "noEmit": true,
     "esModuleInterop": true,
