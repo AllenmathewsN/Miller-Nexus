@@ -12,7 +12,7 @@ export async function logAudit(args: {
       actorType: args.actorType,
       actorId: args.actorId ?? null,
       action: args.action,
-      metadata: args.metadata ?? undefined,
+      metadata: args.metadata ? JSON.stringify(args.metadata) : undefined,
       ip: args.ip ?? null,
       userAgent: args.userAgent ?? null,
     },
