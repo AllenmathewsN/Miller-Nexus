@@ -3,8 +3,8 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider = "sqlite"
+  url      = "file:./dev.db"
 }
 
 model User {
@@ -14,6 +14,9 @@ model User {
   role         String
   passwordHash String
   createdAt    DateTime @default(now())
+  caseFolders  CaseFolder[]
+  documents    Document[] @relation("DocumentOwner")
+  approvals    Approval[]
 }
 
 model Project {
@@ -66,4 +69,183 @@ model AuditLog {
   ip        String?
   userAgent String?
   createdAt DateTime @default(now())
+}
+
+// EDMS Models
+model CaseCategory {
+  id          String       @id @default(cuid())
+  name        String       @unique
+  description String?
+  createdAt   DateTime     @default(now())
+  folders     CaseFolder[]
+}
+
+model CaseFolder {
+  id          String        @id @default(cuid())
+  name        String
+  description String?
+  categoryId  String?
+  category    CaseCategory? @relation(fields: [categoryId], references: [id])
+  ownerId     String
+  owner       User          @relation(fields: [ownerId], references: [id])
+  status      String        @default("active")
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+  documents   Document[]
+}
+
+model DocumentType {
+  id          String     @id @default(cuid())
+  name        String     @unique
+  description String?
+  fields      Field[]
+  documents   Document[]
+  createdAt   DateTime   @default(now())
+}
+
+model Field {
+  id             String          @id @default(cuid())
+  name           String
+  fieldType      String
+  required       Boolean         @default(false)
+  options        String?
+  documentTypeId String
+  documentType   DocumentType    @relation(fields: [documentTypeId], references: [id])
+  fieldValues    FieldValue[]
+  createdAt      DateTime        @default(now())
+}
+
+model Document {
+  id               String          @id @default(cuid())
+  name             String
+  description      String?
+  folderId         String
+  folder           CaseFolder      @relation(fields: [folderId], references: [id], onDelete: Cascade)
+  documentTypeId   String?
+  documentType     DocumentType?   @relation(fields: [documentTypeId], references: [id])
+  ownerId          String
+  owner            User            @relation("DocumentOwner", fields: [ownerId], references: [id])
+  status           String          @default("draft")
+  tags             String?
+  currentVersion   Int             @default(1)
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  versions         DocumentVersion[]
+  fieldValues      FieldValue[]
+  workflowInstance WorkflowInstance?
+  magicLinks       MagicLink[]
+}
+
+model DocumentVersion {
+  id               String   @id @default(cuid())
+  documentId       String
+  document         Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  version          Int
+  storageKey       String
+  fileName         String
+  mimeType         String
+  size             Int
+  uploadedBy       String
+  uploadedAt       DateTime @default(now())
+  notes            String?
+}
+
+model FieldValue {
+  id         String   @id @default(cuid())
+  documentId String
+  document   Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  fieldId    String
+  field      Field    @relation(fields: [fieldId], references: [id])
+  value      String
+  createdAt  DateTime @default(now())
+}
+
+model Workflow {
+  id          String             @id @default(cuid())
+  name        String             @unique
+  description String?
+  steps       WorkflowStep[]
+  instances   WorkflowInstance[]
+  createdAt   DateTime           @default(now())
+}
+
+model WorkflowStep {
+  id          String     @id @default(cuid())
+  workflowId  String
+  workflow    Workflow   @relation(fields: [workflowId], references: [id])
+  stepOrder   Int
+  name        String
+  assignedRole String
+  action      String
+  createdAt   DateTime   @default(now())
+  approvals   Approval[]
+}
+
+model WorkflowInstance {
+  id          String     @id @default(cuid())
+  workflowId  String
+  workflow    Workflow   @relation(fields: [workflowId], references: [id])
+  documentId  String     @unique
+  document    Document   @relation(fields: [documentId], references: [id])
+  currentStep Int        @default(1)
+  status      String     @default("pending")
+  startedAt   DateTime   @default(now())
+  completedAt DateTime?
+  approvals   Approval[]
+}
+
+model Approval {
+  id                 String            @id @default(cuid())
+  workflowInstanceId String
+  workflowInstance   WorkflowInstance  @relation(fields: [workflowInstanceId], references: [id])
+  stepId             String
+  step               WorkflowStep      @relation(fields: [stepId], references: [id])
+  approverId         String
+  approver           User              @relation(fields: [approverId], references: [id])
+  decision           String?
+  comments           String?
+  decidedAt          DateTime?
+  createdAt          DateTime          @default(now())
+}
+
+model RetentionPolicy {
+  id             String   @id @default(cuid())
+  name           String   @unique
+  documentTypeId String?
+  categoryId     String?
+  retentionDays  Int
+  autoArchive    Boolean  @default(false)
+  legalHold      Boolean  @default(false)
+  createdAt      DateTime @default(now())
+}
+
+model MagicLink {
+  id                    String    @id @default(cuid())
+  token                 String    @unique
+  email                 String
+  documentId            String
+  document              Document  @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  permissions           String    @default("view")
+  role                  String    @default("external_collaborator")
+  expiresAt             DateTime
+  maxUses               Int       @default(1)
+  usedCount             Int       @default(0)
+  status                String    @default("active")
+  requireAdditionalAuth Boolean   @default(false)
+  customMessage         String?
+  createdBy             String
+  revokedBy             String?
+  revokedAt             DateTime?
+  createdAt             DateTime  @default(now())
+  lastAccessedAt        DateTime?
+  usageLog              MagicLinkUsage[]
+}
+
+model MagicLinkUsage {
+  id          String     @id @default(cuid())
+  magicLinkId String
+  magicLink   MagicLink  @relation(fields: [magicLinkId], references: [id], onDelete: Cascade)
+  usedAt      DateTime   @default(now())
+  ipAddress   String?
+  userAgent   String?
 }
