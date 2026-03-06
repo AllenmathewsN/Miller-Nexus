@@ -14,23 +14,7 @@ async function main() {
     update: { name, role, passwordHash },
     create: { email, name, role, passwordHash },
   });
-
-  const categories = [
-    "Corporate", "Real Estate", "Litigation", "Compliance", "Tax", 
-    "Employment", "Intellectual Property", "Mergers & Acquisitions", 
-    "Banking & Finance", "Insurance", "Healthcare", "Technology", 
-    "Energy", "Construction", "Family Law", "Estate Planning", "Other"
-  ];
-
-  for (const name of categories) {
-    await prisma.caseCategory.upsert({
-      where: { name },
-      update: {},
-      create: { name },
-    });
-  }
-
-  console.log("Seed complete:", { email, role, categories: categories.length });
+  console.log("Seed complete:", { email, role });
 }
 
 main().catch((e) => { console.error(e); process.exit(1); }).finally(async () => prisma.$disconnect());
